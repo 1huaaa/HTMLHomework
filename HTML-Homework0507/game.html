@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>終極密碼</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #e8edf5;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+      font-family: sans-serif;
+    }
+
+    .card {
+      background: #f0f4ff;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 500;
+      color: #185FA5;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 1.5rem;
+    }
+
+    #range-hint {
+      background: white;
+      border: 1px solid #B5D4F4;
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: #185FA5;
+      font-size: 15px;
+      margin-bottom: 1rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    input[type="number"] {
+      width: 130px;
+      padding: 10px 14px;
+      border: 1px solid #B5D4F4;
+      border-radius: 8px;
+      font-size: 17px;
+      text-align: center;
+    }
+
+    #guess-btn {
+      padding: 10px 24px;
+      background: #185FA5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #guess-btn:hover { opacity: 0.88; }
+    #guess-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #result {
+      font-size: 18px;
+      font-weight: 500;
+      min-height: 28px;
+      margin-bottom: 0.5rem;
+    }
+
+    #result.error { color: #E24B4A; }
+    #result.win   { color: #1D9E75; }
+
+    #count {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .history-wrap {
+      max-height: 160px;
+      overflow-y: auto;
+      margin: 0.5rem 0 1rem;
+    }
+
+    #history {
+      list-style: none;
+      padding: 0;
+    }
+
+    #history li {
+      font-size: 13px;
+      color: #888;
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    #history li.num-row {
+      color: #222;
+      font-weight: 500;
+      padding-left: 8px;
+    }
+
+    #restart-btn {
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid #B5D4F4;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #185FA5;
+      cursor: pointer;
+    }
+
+    #restart-btn:hover { background: #E6F1FB; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="title">終極密碼</div>
+    <div class="subtitle">猜數字遊戲</div>
+
+    <p id="range-hint">請輸入 1-100 之間整數</p>
+
+    <div class="input-row">
+      <input type="number" id="guess-input" placeholder="輸入數字...">
+      <button id="guess-btn">猜！</button>
+    </div>
+
+    <p id="result"></p>
+    <p id="count"></p>
+
+    <div class="history-wrap">
+      <ul id="history"></ul>
+    </div>
+
+    <button id="restart-btn">重新開始</button>
+  </div>
+
+  <script>
+    let answer, low, high, guessCount;
+
+    function startGame() {
+      answer = Math.floor(Math.random() * 100) + 1;
+      low = 1;
+      high = 100;
+      guessCount = 0;
+
+      document.getElementById("range-hint").textContent = "請輸入 1-100 之間整數";
+      document.getElementById("result").textContent = "";
+      document.getElementById("result").className = "";
+      document.getElementById("count").textContent = "";
+      document.getElementById("history").innerHTML = "";
+      document.getElementById("guess-input").value = "";
+      document.getElementById("guess-btn").disabled = false;
+      document.getElementById("guess-input").focus();
+    }
+
+    function doGuess() {
+      const input = document.getElementById("guess-input");
+      const guess = parseInt(input.value);
+      const resultEl = document.getElementById("result");
+
+      if (isNaN(guess)) {
+        resultEl.textContent = "請輸入數字！";
+        resultEl.className = "error";
+        input.value = "";
+        input.focus();
+        return;
+      }
+
+      if (guess < low || guess > high) {
+        resultEl.textContent = "超出範圍！請輸入 " + low + " 到 " + high + " 之間的整數";
+        resultEl.className = "error";
+        input.value = "";
+        input.focus();
+        return;
+      }
+
+      const rangeBefore = low + "-" + high;
+      guessCount++;
+
+      if (guess === answer) {
+        addHistory(rangeBefore, guess, null);
+        resultEl.textContent = "猜中了，答案是：" + answer;
+        resultEl.className = "win";
+        document.getElementById("count").textContent = "共猜了 " + guessCount + " 次";
+        document.getElementById("range-hint").textContent = "猜中了！";
+        document.getElementById("guess-btn").disabled = true;
+
+      } else if (guess < answer) {
+        low = guess;
+        const rangeAfter = low + "-" + high;
+        addHistory(rangeBefore, guess, rangeAfter);
+        document.getElementById("range-hint").textContent = "請輸入 " + rangeAfter + " 之間整數";
+        resultEl.textContent = "";
+        resultEl.className = "";
+        document.getElementById("count").textContent = "已猜 " + guessCount + " 次";
+
+      } else {
+        high = guess;
+        const rangeAfter = low + "-" + high;
+        addHistory(rangeBefore, guess, rangeAfter);
+        document.getElementById("range-hint").textContent = "請輸入 " + rangeAfter + " 之間整數";
+        resultEl.textContent = "";
+        resultEl.className = "";
+        document.getElementById("count").textContent = "已猜 " + guessCount + " 次";
+      }
+
+      input.value = "";
+      input.focus();
+    }
+
+    function addHistory(rangeBefore, guess, rangeAfter) {
+      const list = document.getElementById("history");
+
+      const liRange = document.createElement("li");
+      liRange.textContent = "請輸入 " + rangeBefore + " 之間整數";
+      list.appendChild(liRange);
+
+      const liGuess = document.createElement("li");
+      liGuess.className = "num-row";
+      liGuess.textContent = guess;
+      list.appendChild(liGuess);
+
+      if (rangeAfter) {
+        const liNew = document.createElement("li");
+        liNew.textContent = "請輸入 " + rangeAfter + " 之間整數";
+        list.appendChild(liNew);
+      }
+
+      document.querySelector(".history-wrap").scrollTop = 9999;
+    }
+
+    document.getElementById("guess-btn").addEventListener("click", doGuess);
+    document.getElementById("restart-btn").addEventListener("click", startGame);
+    document.getElementById("guess-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") doGuess();
+    });
+
+    startGame();
+  </script>
+
+</body>
+</html>
