@@ -37,3 +37,76 @@
     function doGuess() {
       const input = document.getElementById("guess-input");
       const guess = parseInt(input.value);
+      const resultEl = document.getElementById("result");
+
+      if (isNaN(guess)) {
+        resultEl.textContent = "請輸入數字！";
+        input.value = "";
+        return;
+      }
+
+      if (guess < low || guess > high) {
+        resultEl.textContent = "超出範圍！請輸入 " + low + " 到 " + high + " 之間的整數";
+        input.value = "";
+        return;
+      }
+
+      const rangeBefore = low + "-" + high;
+      guessCount++;
+
+      if (guess === answer) {
+        addHistory(rangeBefore, guess, null);
+        resultEl.textContent = "猜中了，答案是：" + answer;
+        document.getElementById("count").textContent = "共猜了 " + guessCount + " 次";
+        document.getElementById("range-hint").textContent = "猜中了！";
+        document.getElementById("guess-btn").disabled = true;
+
+      } else if (guess < answer) {
+        low = guess;
+        const rangeAfter = low + "-" + high;
+        addHistory(rangeBefore, guess, rangeAfter);
+        document.getElementById("range-hint").textContent = "請輸入 " + rangeAfter + " 之間整數";
+        resultEl.textContent = "";
+        document.getElementById("count").textContent = "已猜 " + guessCount + " 次";
+
+      } else {
+        high = guess;
+        const rangeAfter = low + "-" + high;
+        addHistory(rangeBefore, guess, rangeAfter);
+        document.getElementById("range-hint").textContent = "請輸入 " + rangeAfter + " 之間整數";
+        resultEl.textContent = "";
+        document.getElementById("count").textContent = "已猜 " + guessCount + " 次";
+      }
+
+      input.value = "";
+    }
+
+    function addHistory(rangeBefore, guess, rangeAfter) {
+      const list = document.getElementById("history");
+
+      const liRange = document.createElement("li");
+      liRange.textContent = "請輸入 " + rangeBefore + " 之間整數";
+      list.appendChild(liRange);
+
+      const liGuess = document.createElement("li");
+      liGuess.textContent = guess;
+      list.appendChild(liGuess);
+
+      if (rangeAfter) {
+        const liNew = document.createElement("li");
+        liNew.textContent = "請輸入 " + rangeAfter + " 之間整數";
+        list.appendChild(liNew);
+      }
+    }
+
+    document.getElementById("guess-btn").addEventListener("click", doGuess);
+    document.getElementById("restart-btn").addEventListener("click", startGame);
+    document.getElementById("guess-input").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") doGuess();
+    });
+
+    startGame();
+  </script>
+
+</body>
+</html>
